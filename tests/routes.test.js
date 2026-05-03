@@ -129,3 +129,22 @@ describe("GET /api/history/:sessionId", () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ── Security middleware ──────────────────────────────────────────
+describe("Security", () => {
+  it("strips null bytes from input", async () => {
+    const res = await request(app).post("/api/chat").send({ message: "How\x00 to vote?" });
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects message exceeding 1000 chars", async () => {
+    const res = await request(app).post("/api/chat").send({ message: "x".repeat(1001) });
+    expect(res.status).toBe(400);
+  });
+
+  it("health check returns uptime", async () => {
+    const res = await request(app).get("/api/health");
+    expect(res.status).toBe(200);
+    expect(typeof res.body.uptime).toBe("number");
+  });
+});

@@ -1,45 +1,47 @@
-const { translateWithGemini } = require("./gemini");
-
-let cloudTranslateClient = null;
-try {
-  if (process.env.GOOGLE_TRANSLATE_API_KEY) {
-    const { Translate } = require("@google-cloud/translate").v2;
-    cloudTranslateClient = new Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY });
-    console.log("[translate] Using Google Cloud Translation API");
-  } else {
-    console.log("[translate] No Cloud Translate key — using Gemini translation fallback");
-  }
-} catch (e) {
-  console.warn("[translate] Cloud Translate unavailable:", e.message);
-}
+const https = require("https");
 
 const LANGUAGES = {
-  en: "English",  hi: "Hindi",    bn: "Bengali",
-  te: "Telugu",   mr: "Marathi",  ta: "Tamil",
-  gu: "Gujarati", kn: "Kannada",  ml: "Malayalam",
+  en: "English", hi: "Hindi",    bn: "Bengali",
+  te: "Telugu",  mr: "Marathi",  ta: "Tamil",
+  gu: "Gujarati",kn: "Kannada",  ml: "Malayalam",
   pa: "Punjabi",
 };
 
-async function translateText(text, targetLang) {
-  if (!LANGUAGES[targetLang]) {
-    throw Object.assign(new Error(`Unsupported language: ${targetLang}`), { status: 400 });
-  }
-
-  if (cloudTranslateClient) {
-    const [translated] = await cloudTranslateClient.translate(text, targetLang);
-    return { translatedText: translated, targetLang, languageName: LANGUAGES[targetLang], provider: "google-cloud" };
-  }
-
-  const translated = await translateWithGemini(text, LANGUAGES[targetLang]);
-  return { translatedText: translated, targetLang, languageName: LANGUAGES[targetLang], provider: "gemini" };
+/**
+ * Translate text using MyMemory free API
+ * @param {string} text
+ * @param {string} targetLang
+ * @returns {Promise<{translatedText: string, targetLang: string, languageName: string}>}
+ */
+function translateText(text, targetLang) {
+  return new Promise((resolve, reject) => {
+    if (!LANGUAGES[targetLang]) {
+      return reject(Object.assign(new Error(`Unsupported language: ${targetLang}`), { status: 400 }));
+    }
+    const encoded = encodeURIComponent(text.slice(0, 500));
+    const url = `https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|${targetLang}`;
+    https.get(url, (res) => {
+      let data = "";
+      res.on("data", (c) => (data += c));
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          resolve({ translatedText: json.responseData.translatedText, targetLang, languageName: LANGUAGES[targetLang] });
+        } catch {
+          reject(new Error("Translation parse failed"));
+        }
+      });
+    }).on("error", reject);
+  });
 }
 
-async function detectLanguage(text) {
-  if (cloudTranslateClient) {
-    const [result] = await cloudTranslateClient.detect(text);
-    return result.language;
-  }
-  return "en";
+/**
+ * Detect language of input text
+ * @param {string} _text
+ * @returns {Promise<string>}
+ */
+function detectLanguage(_text) {
+  return Promise.resolve("en");
 }
 
 module.exports = { translateText, detectLanguage, LANGUAGES };

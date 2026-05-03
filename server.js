@@ -6,6 +6,7 @@ const path = require("path");
 
 const rateLimiter = require("./middleware/rateLimiter");
 const errorHandler = require("./middleware/errorHandler");
+const { sanitizeInput, preventParamPollution } = require("./middleware/security");
 
 const chatRoute = require("./routes/chat");
 const translateRoute = require("./routes/translate");
@@ -14,14 +15,27 @@ const historyRoute = require("./routes/history");
 
 const app = express();
 
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
-app.use(express.json({ limit: "10kb" }));
-app.use("/api/", rateLimiter);
-app.use(express.static(path.join(__dirname, "public"), {
-  maxAge: "1h",
-  etag: true,
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'"],
+      imgSrc: ["'self'", "data:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
 }));
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || "*", methods: ["GET", "POST"] }));
+app.disable("x-powered-by");
+
+app.use(express.json({ limit: "10kb", strict: true }));
+app.use(sanitizeInput);
+app.use(preventParamPollution);
+app.use("/api/", rateLimiter);
+app.use(express.static(path.join(__dirname, "public"), { maxAge: "1h", etag: true }));
 
 app.use("/api/chat", chatRoute);
 app.use("/api/translate", translateRoute);
