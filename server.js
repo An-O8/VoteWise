@@ -18,14 +18,21 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json({ limit: "10kb" }));
 app.use("/api/", rateLimiter);
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+  maxAge: "1h",
+  etag: true,
+}));
 
 app.use("/api/chat", chatRoute);
 app.use("/api/translate", translateRoute);
 app.use("/api/tts", ttsRoute);
 app.use("/api/history", historyRoute);
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+app.get("/api/health", (_req, res) => {
+  res.set("Cache-Control", "no-store");
+  res.json({ status: "ok", uptime: process.uptime() });
+});
+
 app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
 app.use(errorHandler);
