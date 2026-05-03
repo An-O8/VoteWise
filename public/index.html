@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoteWise — Election Education Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5f2ed;
+      --surface: #ffffff;
+      --ink: #0f1923;
+      --muted: #6b7280;
+      --border: #e2ddd6;
+      --accent: #1a4fcf;
+      --accent-bg: #eef2ff;
+      --saffron: #e85d00;
+      --green: #138808;
+      --shadow-sm: 0 1px 4px rgba(0,0,0,.06);
+      --shadow: 0 4px 16px rgba(0,0,0,.08);
+      --r: 14px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "DM Sans", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ─ Header ────────────────────────────────────── */
+    header {
+      flex-shrink: 0;
+      height: 60px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+
+    .brand-flag {
+      width: 34px; height: 34px; border-radius: 8px; overflow: hidden;
+      display: grid; grid-template-rows: 1fr 1fr 1fr;
+      box-shadow: var(--shadow-sm);
+    }
+    .brand-flag div:nth-child(1) { background: #ff9933; }
+    .brand-flag div:nth-child(2) { background: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .brand-flag div:nth-child(3) { background: #138808; }
+
+    .brand-name {
+      font-family: "Playfair Display", serif;
+      font-size: 20px;
+      color: var(--ink);
+    }
+    .brand-name em { font-style: normal; color: var(--accent); }
+
+    select#lang {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      background: var(--surface);
+      color: var(--ink);
+      cursor: pointer;
+      outline: none;
+    }
+    select#lang:focus { border-color: var(--accent); }
+
+    /* ─ Main ─────────────────────────────────────── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 16px;
+      min-height: 0;
+    }
+
+    /* ─ Welcome ──────────────────────────────────── */
+    #welcome {
+      padding: 28px 0 20px;
+      text-align: center;
+      animation: up .4s ease both;
+    }
+    #welcome h1 {
+      font-family: "Playfair Display", serif;
+      font-size: 26px;
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+    #welcome p { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .chip {
+      padding: 7px 13px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--ink);
+      transition: border-color .15s, background .15s, color .15s;
+    }
+    .chip:hover { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+    .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* ─ Chat ─────────────────────────────────────── */
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 6px 0 14px;
+      scroll-behavior: smooth;
+      min-height: 0;
+    }
+    #chat::-webkit-scrollbar { width: 4px; }
+    #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .msg { display: flex; gap: 9px; animation: up .22s ease both; }
+    .msg.user { flex-direction: row-reverse; }
+
+    .av {
+      width: 32px; height: 32px; border-radius: 50%;
+      flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 15px;
+    }
+    .av.bot  { background: var(--accent-bg); }
+    .av.user { background: var(--ink); color: #fff; font-size: 12px; font-weight: 600; }
+
+    .bubble {
+      max-width: 80%;
+      padding: 11px 14px;
+      border-radius: var(--r);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .bubble.bot {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+    .bubble.user {
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .bubble.bot ul, .bubble.bot ol { margin-left: 16px; margin-top: 5px; }
+    .bubble.bot li { margin-bottom: 3px; }
+
+    .tts-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-top: 8px; padding: 3px 9px;
+      border: 1px solid var(--border); border-radius: 6px;
+      background: var(--bg); font-size: 12px; color: var(--muted);
+      cursor: pointer; font-family: inherit;
+      transition: border-color .15s, color .15s;
+    }
+    .tts-btn:hover, .tts-btn.active { border-color: var(--accent); color: var(--accent); }
+    .tts-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .typing { display: flex; gap: 4px; padding: 12px 14px; }
+    .typing span {
+      width: 6px; height: 6px; background: var(--accent);
+      border-radius: 50%; opacity: .5;
+      animation: bounce 1.1s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .18s; }
+    .typing span:nth-child(3) { animation-delay: .36s; }
+
+    /* ─ Input ────────────────────────────────────── */
+    #input-row {
+      flex-shrink: 0;
+      display: flex; align-items: flex-end; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 9px 10px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    #msg {
+      flex: 1; border: none; outline: none;
+      font-family: inherit; font-size: 14px;
+      background: transparent; color: var(--ink);
+      resize: none; max-height: 120px; line-height: 1.5;
+    }
+    #msg::placeholder { color: var(--muted); }
+
+    #send {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: var(--accent); border: none; border-radius: 9px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s;
+    }
+    #send:hover:not(:disabled) { background: #1340b0; }
+    #send:active { transform: scale(.94); }
+    #send:disabled { background: var(--border); cursor: not-allowed; }
+    #send svg { fill: #fff; }
+    #send:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    /* ─ Animations ───────────────────────────────── */
+    @keyframes up {
+      from { opacity: 0; transform: translateY(7px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%            { transform: translateY(-5px); }
+    }
+
+    @media (max-width: 540px) {
+      #welcome h1 { font-size: 21px; }
+      .bubble { max-width: 90%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/" aria-label="VoteWise home">
+    <div class="brand-flag" aria-hidden="true">
+      <div></div><div>⊙</div><div></div>
+    </div>
+    <span class="brand-name">Vote<em>Wise</em></span>
+  </a>
+
+  <select id="lang" aria-label="Select response language">
+    <option value="en">English</option>
+    <option value="hi">हिंदी</option>
+    <option value="bn">বাংলা</option>
+    <option value="te">తెలుగు</option>
+    <option value="mr">मराठी</option>
+    <option value="ta">தமிழ்</option>
+    <option value="gu">ગુજરાતી</option>
+    <option value="kn">ಕನ್ನಡ</option>
+    <option value="ml">മലയാളം</option>
+    <option value="pa">ਪੰਜਾਬੀ</option>
+  </select>
+</header>
+
+<main>
+  <section id="welcome" aria-label="Introduction">
+    <h1>Your Guide to India's<br/>Election Process 🇮🇳</h1>
+    <p>Ask anything about voting, registration, EVMs, or democracy — in your language.</p>
+    <div class="chips" role="list" aria-label="Suggested questions">
+      <button class="chip" role="listitem" onclick="useChip(this)">How do I register to vote?</button>
+      <button class="chip" role="listitem" onclick="useChip(this)">What is an EVM?</button>
+      <button class="chip" role="listitem" onclick="useChip(this)">How are votes counted?</button>
+      <button class="chip" role="listitem" onclick="useChip(this)">What is NOTA?</button>
+      <button class="chip" role="listitem" onclick="useChip(this)">Role of Election Commission</button>
+      <button class="chip" role="listitem" onclick="useChip(this)">How to report election fraud?</button>
+    </div>
+  </section>
+
+  <div id="chat" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+  <div id="input-row" role="search">
+    <textarea
+      id="msg" rows="1"
+      placeholder="Ask about elections, voter rights, candidates…"
+      aria-label="Your question"
+      maxlength="1000"
+    ></textarea>
+    <button id="send" aria-label="Send message" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24"><path d="M2 21L23 12 2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</main>
+
+<script>
+  const chatEl  = document.getElementById("chat");
+  const msgEl   = document.getElementById("msg");
+  const sendEl  = document.getElementById("send");
+  const welcome = document.getElementById("welcome");
+  const langEl  = document.getElementById("lang");
+
+  const SPEECH_LANG_CODES = {
+    en: "en-IN", hi: "hi-IN", bn: "bn-IN", te: "te-IN",
+    mr: "mr-IN", ta: "ta-IN", gu: "gu-IN", kn: "kn-IN",
+    ml: "ml-IN", pa: "pa-IN"
+  };
+
+  let sessionId    = null;
+  let history      = [];
+  let busy         = false;
+  let activeSpeech = null;
+
+  msgEl.addEventListener("input", () => {
+    msgEl.style.height = "auto";
+    msgEl.style.height = Math.min(msgEl.scrollHeight, 120) + "px";
+    sendEl.disabled = !msgEl.value.trim() || busy;
+  });
+
+  msgEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!sendEl.disabled) send(); }
+  });
+
+  sendEl.addEventListener("click", send);
+
+  function useChip(el) {
+    msgEl.value = el.textContent;
+    msgEl.dispatchEvent(new Event("input"));
+    send();
+  }
+
+  async function send() {
+    const text = msgEl.value.trim();
+    if (!text || busy) return;
+
+    welcome.style.display = "none";
+    appendMsg("user", text);
+    history.push({ role: "user", content: text });
+
+    msgEl.value = "";
+    msgEl.style.height = "auto";
+    sendEl.disabled = true;
+    busy = true;
+
+    const typingEl = appendTyping();
+
+    try {
+      const res  = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, sessionId, history: history.slice(-10), targetLang: langEl.value }),
+      });
+      const data = await res.json();
+      typingEl.remove();
+
+      if (!res.ok) throw new Error(data.error);
+
+      sessionId = data.sessionId;
+      history.push({ role: "assistant", content: data.response });
+      appendMsg("bot", data.response);
+    } catch {
+      typingEl.remove();
+      appendMsg("bot", "⚠️ Something went wrong. Please try again.");
+    }
+
+    busy = false;
+    sendEl.disabled = !msgEl.value.trim();
+    msgEl.focus();
+  }
+
+  function appendMsg(role, text) {
+    const wrap = document.createElement("div");
+    wrap.className = `msg ${role}`;
+
+    const av = document.createElement("div");
+    av.className = `av ${role}`;
+    av.setAttribute("aria-hidden", "true");
+    av.textContent = role === "bot" ? "🗳️" : "You";
+
+    const bubble = document.createElement("div");
+    bubble.className = `bubble ${role}`;
+    bubble.innerHTML = fmt(text);
+
+    if (role === "bot") {
+      const btn = document.createElement("button");
+      btn.className = "tts-btn";
+      btn.setAttribute("aria-label", "Listen to this answer");
+      btn.innerHTML = "🔊 Listen";
+      btn.onclick = () => playTTS(text, btn);
+      bubble.appendChild(btn);
+    }
+
+    wrap.appendChild(av);
+    wrap.appendChild(bubble);
+    chatEl.appendChild(wrap);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    return wrap;
+  }
+
+  function appendTyping() {
+    const wrap = document.createElement("div");
+    wrap.className = "msg";
+    wrap.innerHTML = `<div class="av bot" aria-hidden="true">🗳️</div>
+      <div class="bubble bot"><div class="typing"><span></span><span></span><span></span></div></div>`;
+    chatEl.appendChild(wrap);
+    chatEl.scrollTop = chatEl.scrollHeight;
+    return wrap;
+  }
+
+  async function playTTS(text, btn) {
+    // Stop any currently active speech
+    if (activeSpeech) {
+      speechSynthesis.cancel();
+      activeSpeech = null;
+      document.querySelectorAll(".tts-btn.active").forEach(b => {
+        b.classList.remove("active");
+        b.innerHTML = "🔊 Listen";
+        b.dataset.playing = "0";
+      });
+      if (btn.dataset.playing === "1") return; // was already this button — toggle off
+    }
+
+    btn.innerHTML = "⏳…";
+    btn.dataset.playing = "1";
+
+    try {
+      const res  = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text.slice(0, 800), lang: langEl.value }),
+      });
+      const data = await res.json();
+
+      if (data.fallback === "webspeech" || !data.audioContent) {
+        // Server has no Cloud TTS key — use browser Web Speech API
+        playWebSpeech(text, btn);
+        return;
+      }
+
+      // Play Google Cloud TTS audio
+      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      activeSpeech = { pause: () => audio.pause() };
+      btn.classList.add("active");
+      btn.innerHTML = "⏹ Stop";
+      audio.play();
+      audio.onended = () => {
+        btn.classList.remove("active");
+        btn.innerHTML = "🔊 Listen";
+        btn.dataset.playing = "0";
+        activeSpeech = null;
+      };
+    } catch {
+      playWebSpeech(text, btn);
+    }
+  }
+
+  function playWebSpeech(text, btn) {
+    if (!("speechSynthesis" in window)) {
+      btn.innerHTML = "🔊 Listen";
+      btn.dataset.playing = "0";
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text.slice(0, 800));
+    utterance.lang = SPEECH_LANG_CODES[langEl.value] || "en-IN";
+    utterance.rate = 0.9;
+
+    const voices = speechSynthesis.getVoices();
+    const match = voices.find(v => v.lang.startsWith(langEl.value))
+                || voices.find(v => v.lang.startsWith("en"));
+    if (match) utterance.voice = match;
+
+    activeSpeech = utterance;
+    btn.classList.add("active");
+    btn.innerHTML = "⏹ Stop";
+
+    utterance.onend = utterance.onerror = () => {
+      btn.classList.remove("active");
+      btn.innerHTML = "🔊 Listen";
+      btn.dataset.playing = "0";
+      activeSpeech = null;
+    };
+
+    speechSynthesis.speak(utterance);
+  }
+
+  function fmt(t) {
+    return t
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+      .replace(/\*(.*?)\*/g,"<em>$1</em>")
+      .replace(/^#{1,3} (.+)/gm,"<strong>$1</strong>")
+      .replace(/^[*-] (.+)/gm,"<li>$1</li>")
+      .replace(/^\d+\. (.+)/gm,"<li>$1</li>")
+      .replace(/(<li>[\s\S]*?<\/li>)/g,"<ul>$1</ul>")
+      .replace(/\n/g,"<br>");
+  }
+</script>
+</body>
+</html>
